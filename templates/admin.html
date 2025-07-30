@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="admin-header">
+                <h1 class="admin-title">Admin Dashboard</h1>
+                <p class="admin-subtitle">Manage feedback and view reports</p>
+            </div>
+            
+            <div class="reports-placeholder">
+                <h3>📊 Reports Section</h3>
+                <p>Reports functionality will be implemented here.</p>
+                <p>This section will display feedback analytics, charts, and detailed reports once connected to the cloud database.</p>
+                
+                <div style="margin-top: 30px; padding: 20px; background: white; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">Coming Soon:</h4>
+                    <ul style="text-align: left; color: #666; line-height: 1.8;">
+                        <li>📈 Feedback Analytics Dashboard</li>
+                        <li>📋 Detailed Feedback Reports</li>
+                        <li>📊 Visual Charts and Graphs</li>
+                        <li>🔍 Search and Filter Options</li>
+                        <li>📤 Export Functionality</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="{{ url_for('home') }}" class="btn btn-primary">
+                    🏠 Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

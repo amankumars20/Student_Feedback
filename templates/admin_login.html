@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Feedback Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Admin Login</h1>
+            <p>Access the admin dashboard to manage feedback and view reports</p>
+        </div>
+        
+        <div class="card">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('admin_login_post') }}" method="POST">
+                <div class="form-group">
+                    <label for="email">📧 Email Address</label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           class="form-control" 
+                           placeholder="Enter your admin email"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">🔑 Password</label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           class="form-control" 
+                           placeholder="Enter your password"
+                           required>
+                </div>
+
+                <button type="submit" class="btn btn-submit">
+                    🚀 Login to Dashboard
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="{{ url_for('home') }}" class="btn btn-secondary">
+                    🏠 Back to Home
+                </a>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9rem;">
+                <p>🔒 Secure admin access only</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

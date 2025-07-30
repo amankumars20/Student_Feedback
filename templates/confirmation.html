@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Submitted Successfully</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="success-container">
+                <div class="success-icon">✅</div>
+                <h1 class="success-title">Feedback Submitted Successfully!</h1>
+                <p class="success-message">
+                    Thank you for taking the time to share your feedback with us. 
+                    Your input is valuable and helps us improve our services.
+                </p>
+                <p class="success-message">
+                    We have received your feedback and it has been securely stored. 
+                    Our team will review it and take appropriate action if needed.
+                </p>
+                
+                <div class="button-container">
+                    <a href="{{ url_for('home') }}" class="btn btn-primary">
+                        🏠 Back to Home
+                    </a>
+                    <a href="{{ url_for('feedback_form') }}" class="btn btn-secondary">
+                        📝 Submit Another Feedback
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

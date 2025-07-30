@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Feedback Form</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Student Feedback Form</h1>
+            <p>We value your feedback and suggestions</p>
+        </div>
+        
+        <div class="card">
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="alert alert-danger">
+                  {% for message in messages %}
+                    <p>{{ message }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            <form action="/submit" method="POST">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="feedback">Your Feedback</label>
+                    <textarea id="feedback" name="feedback" class="form-control" placeholder="Please share your thoughts, suggestions, or concerns..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-submit">
+                    Submit Feedback
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="{{ url_for('home') }}" style="color: #667eea; text-decoration: none;">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

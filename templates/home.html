@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | Feedback Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Student Feedback Portal</h1>
+            <p>Your voice matters. Help us improve our services.</p>
+        </div>
+        
+        <div class="card">
+            <div class="button-container">
+                <a href="{{ url_for('feedback_form') }}" class="btn btn-primary">
+                    📝 Student Feedback
+                </a>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                    📊 Admin Dashboard
+                </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; color: #666;">
+                <p>Choose your role to continue</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
