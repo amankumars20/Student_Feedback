@@ -421,5 +421,24 @@ def submit_feedback():
         flash(f'An unexpected error occurred: {str(e)}')
         return redirect(url_for('feedback_form'))
 
+@app.route('/admin/feedback-view')
+@login_required
+def feedback_view_page():
+    return render_template('feedback_data.html')
+
+
+@app.route('/admin/feedback-data')
+@login_required
+def feedback_data():
+    try:
+        feedback_table = dynamodb.Table('FeedbackSummaryTable')
+        response = feedback_table.scan()
+        items = response.get('Items', [])
+        return {'data': items}
+    except Exception as e:
+        logger.error(f"Error fetching feedback data: {e}")
+        return {'error': str(e)}, 500
+
+
 if __name__ == "__main__":
     app.run(debug=True)
