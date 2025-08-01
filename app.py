@@ -439,6 +439,238 @@ def feedback_data():
         logger.error(f"Error fetching feedback data: {e}")
         return {'error': str(e)}, 500
 
+@app.route('/admin/dashboard-stats')
+@login_required
+def dashboard_stats():
+    """Get dashboard statistics for charts"""
+    try:
+        feedback_table = dynamodb.Table('FeedbackSummaryTable')
+        response = feedback_table.scan()
+        items = response.get('Items', [])
+        
+        # Process data for charts
+        sentiment_counts = {'POSITIVE': 0, 'NEGATIVE': 0, 'NEUTRAL': 0, 'MIXED': 0}
+        faculty_mentions = {}
+        theme_tags = {}
+        monthly_data = {}
+        total_comments = 0
+        
+        for item in items:
+            # Count total comments
+            total_comments += int(item.get('TotalComments', 0))
+            
+            # Process sentiment data
+            sentiment_data = item.get('SentimentCounts', {})
+            for sentiment, count in sentiment_data.items():
+                if sentiment.upper() in sentiment_counts:
+                    sentiment_counts[sentiment.upper()] += int(count)
+            
+            # Process faculty mentions
+            faculty_data = item.get('FacultyMentions', {})
+            for faculty, count in faculty_data.items():
+                faculty_mentions[faculty] = faculty_mentions.get(faculty, 0) + int(count)
+            
+            # Process theme tags
+            theme_data = item.get('ThemeTags', {})
+            for theme, count in theme_data.items():
+                theme_tags[theme] = theme_tags.get(theme, 0) + int(count)
+            
+            # Process monthly data (extract from processed_at)
+            processed_at = item.get('processed_at', '')
+            if processed_at:
+                try:
+                    # Extract month from timestamp
+                    month = processed_at[:7]  # YYYY-MM format
+                    monthly_data[month] = monthly_data.get(month, 0) + int(item.get('TotalComments', 0))
+                except:
+                    pass
+        
+        return {
+            'total_feedback': len(items),
+            'total_comments': total_comments,
+            'sentiment_distribution': sentiment_counts,
+            'top_faculty': dict(sorted(faculty_mentions.items(), key=lambda x: x[1], reverse=True)[:10]),
+            'top_themes': dict(sorted(theme_tags.items(), key=lambda x: x[1], reverse=True)[:10]),
+            'monthly_trends': dict(sorted(monthly_data.items()))
+        }
+    except Exception as e:
+        logger.error(f"Error fetching dashboard stats: {e}")
+        return {'error': str(e)}, 500
+
+@app.route('/admin/filtered-data')
+@login_required
+def filtered_data():
+    """Get filtered feedback data based on query parameters"""
+    try:
+        # Get filter parameters
+        sentiment_filter = request.args.get('sentiment', '').upper()
+        faculty_filter = request.args.get('faculty', '')
+        theme_filter = request.args.get('theme', '')
+        start_date = request.args.get('start_date', '')
+        end_date = request.args.get('end_date', '')
+        
+        feedback_table = dynamodb.Table('FeedbackSummaryTable')
+        response = feedback_table.scan()
+        items = response.get('Items', [])
+        
+        # Apply filters
+        filtered_items = []
+        for item in items:
+            # Sentiment filter
+            if sentiment_filter:
+                sentiment_counts = item.get('SentimentCounts', {})
+                if sentiment_filter not in [k.upper() for k in sentiment_counts.keys()]:
+                    continue
+            
+            # Faculty filter
+            if faculty_filter:
+                faculty_mentions = item.get('FacultyMentions', {})
+                if faculty_filter not in faculty_mentions:
+                    continue
+            
+            # Theme filter
+            if theme_filter:
+                theme_tags = item.get('ThemeTags', {})
+                if theme_filter not in theme_tags:
+                    continue
+            
+            # Date filter
+            if start_date or end_date:
+                processed_at = item.get('processed_at', '')
+                if processed_at:
+                    try:
+                        item_date = processed_at[:10]  # YYYY-MM-DD format
+                        if start_date and item_date < start_date:
+                            continue
+                        if end_date and item_date > end_date:
+                            continue
+                    except:
+                        continue
+            
+            filtered_items.append(item)
+        
+        return {'data': filtered_items, 'count': len(filtered_items)}
+    except Exception as e:
+        logger.error(f"Error fetching filtered data: {e}")
+        return {'error': str(e)}, 500
+
+@app.route('/admin/export-filtered-data')
+@login_required
+def export_filtered_data():
+    """Export filtered data as CSV"""
+    try:
+        # Get the same filtered data
+        filtered_response = filtered_data()
+        if 'error' in filtered_response:
+            return filtered_response
+        
+        items = filtered_response['data']
+        
+        # Generate CSV content
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write headers
+        headers = [
+            "File Name", "Processed At", "Total Comments", "Dominant Sentiment",
+            "Faculty Mentions", "Theme Tags", "Top Key Phrases"
+        ]
+        writer.writerow(headers)
+        
+        # Write data rows
+        for item in items:
+            # Determine dominant sentiment
+            sentiment_counts = item.get('SentimentCounts', {})
+            dominant_sentiment = "UNKNOWN"
+            if sentiment_counts:
+                dominant_sentiment = max(sentiment_counts.items(), key=lambda x: int(x[1]))[0].upper()
+            
+            # Format complex fields
+            faculty_mentions = '; '.join([f"{k}:{v}" for k, v in item.get('FacultyMentions', {}).items()])
+            theme_tags = '; '.join([f"{k}:{v}" for k, v in item.get('ThemeTags', {}).items()])
+            key_phrases = '; '.join(item.get('TopKeyPhrases', []))
+            
+            row = [
+                item.get('file_name', ''),
+                item.get('processed_at', ''),
+                item.get('TotalComments', ''),
+                dominant_sentiment,
+                faculty_mentions,
+                theme_tags,
+                key_phrases
+            ]
+            writer.writerow(row)
+        
+        # Create response
+        csv_content = output.getvalue()
+        response = app.response_class(
+            csv_content,
+            mimetype='text/csv',
+            headers={"Content-disposition": "attachment; filename=filtered_feedback_data.csv"}
+        )
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error exporting filtered data: {e}")
+        return {'error': str(e)}, 500
+
+@app.route('/admin/detailed-feedback-data')
+@login_required
+def detailed_feedback_data():
+    """Get detailed feedback data for the admin dashboard table"""
+    try:
+        feedback_table = dynamodb.Table('FeedbackSummaryTable')
+        response = feedback_table.scan()
+        items = response.get('Items', [])
+        
+        detailed_data = []
+        
+        for item in items:
+            # Extract date from processed_at
+            processed_at = item.get('processed_at', '')
+            date = processed_at[:10] if processed_at else 'N/A'  # Extract YYYY-MM-DD
+            
+            # Determine dominant sentiment
+            sentiment_counts = item.get('SentimentCounts', {})
+            dominant_sentiment = "UNKNOWN"
+            if sentiment_counts:
+                dominant_sentiment = max(sentiment_counts.items(), key=lambda x: int(x[1]))[0].upper()
+            
+            # Get faculty mentions (take the most mentioned faculty)
+            faculty_mentions = item.get('FacultyMentions', {})
+            top_faculty = ""
+            if faculty_mentions:
+                top_faculty = max(faculty_mentions.items(), key=lambda x: int(x[1]))[0]
+            
+            # Get total comments count
+            total_comments = item.get('TotalComments', 0)
+            
+            # Get key phrases (join first few)
+            key_phrases = item.get('TopKeyPhrases', [])
+            key_phrases_str = ', '.join(key_phrases[:3]) if key_phrases else ''
+            
+            # Get themes (join first few)
+            theme_tags = item.get('ThemeTags', {})
+            themes_str = ', '.join(list(theme_tags.keys())[:3]) if theme_tags else ''
+            
+            detailed_data.append({
+                'date': date,
+                'sentiment': dominant_sentiment,
+                'faculty': top_faculty,
+                'comments': total_comments,
+                'key_phrases': key_phrases_str,
+                'themes': themes_str
+            })
+        
+        # Sort by date (newest first)
+        detailed_data.sort(key=lambda x: x['date'], reverse=True)
+        
+        return {'data': detailed_data}
+        
+    except Exception as e:
+        logger.error(f"Error fetching detailed feedback data: {e}")
+        return {'error': str(e)}, 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
